@@ -24,7 +24,7 @@ var log = {
 
 function getChannelId(web, channel_name) {
   return new Promise(resolve => {
-    web.channels.list()
+    web.conversations.list({types: 'public_channel,private_channel'})
       .then(res => {
         for (channel of res.channels)
           if (channel.name == channel_name)

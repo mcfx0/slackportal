@@ -35,6 +35,8 @@ node index.js
   - chat:write:user
   - reactions:read
   - users:read
+  - groups:history (if private channel)
+  - groups:read (if private channel)
 8. Scroll up and click "Install App to Workspace"
 9. Authorize this app
 10. Now you have acquired OAuth Access Token (oauth\_token) and Bot User OAuth Access Token (bot\_token). Specify both tokens in `local_bot_token` and `local_oauth_token` in `config.js`
