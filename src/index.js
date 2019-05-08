@@ -388,7 +388,7 @@ async function main() {
   remote_bot.auth.test({token: config.remote_bot_token})
     .then(res => {
         config.remote_bot_user = res.user_id;
-        log.info(`local bot user ${config.remote_bot_user}`);
+        log.info(`remote bot user ${config.remote_bot_user}`);
     });
 
   createPortal(local_web, local_rtm, remote_web, local_channel_id, remote_channel_id, remote_bot, config.local_bot_token);
