@@ -1,0 +1,10 @@
+version: "3"
+services:
+  sync1:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/srv
+    working_dir: /srv
+    command: node index.js

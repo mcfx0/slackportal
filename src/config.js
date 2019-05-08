@@ -1,12 +1,14 @@
 var config = {};
 
-config.local_bot_token = 'xoxb-WORKSPACE_1_BOT_TOKEN';
-config.local_oauth_token = 'xoxp-WORKSPACE_1_OAUTH_TOKEN';
-config.local_channel_name = 'WORKSPACE_1_CHANNEL_NAME';
+config.remote_bot_token = '';
+config.remote_oauth_token = '';
+config.remote_channel_name = '';
+config.remote_bot_id = '';
 
-config.remote_bot_token = 'xoxb-WORKSPACE_2_BOT_TOKEN';
-config.remote_oauth_token = 'xoxp-WORKSPACE_2_OAUTH_TOKEN';
-config.remote_channel_name = 'WORKSPACE_2_CHANNEL_NAME';
+config.local_bot_token = '';
+config.local_oauth_token = '';
+config.local_channel_name = '';
+config.local_bot_id = '';
 
 //----------------------------------------------------------------------------------------
 

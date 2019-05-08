@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 const {RTMClient, WebClient} = require('@slack/client');
 const config = require('./config');
+const request = require('request');
+const util = require('util');
 
 const START_TS_DIFF = config.START_TS_DIFF;
 const END_TS_DIFF = config.END_TS_DIFF;
@@ -9,6 +11,11 @@ const TS_DIFF_TOLERANCE = config.TS_DIFF_TOLERANCE;
 const MENTION_REGEX = /<@([A-Z0-9]+)>/g;
 const EDITED_FALLBACK_TAG = "slackportal_edited";
 const EMOJI_FALLBACK_TAG = "slackportal_emoji";
+
+remote_bot_id = ''
+remote_bot_user = ''
+local_bot_id = ''
+local_bot_user = ''
 
 // Simple log function
 var log = {
@@ -161,7 +168,7 @@ function searchMessage(web, channel_id, text, start_ts, end_ts) {
   });
 }
 
-function createPortal(local_web, local_rtm, remote_web, local_channel_id, remote_channel_id) {
+function createPortal(local_web, local_rtm, remote_web, local_channel_id, remote_channel_id, remote_bot, bot_token) {
   var reactionHandler = event => {
     if (event.item.channel !== local_channel_id)
       return;
@@ -252,6 +259,30 @@ function createPortal(local_web, local_rtm, remote_web, local_channel_id, remote
       case undefined:
         if (event.thread_ts === undefined) { // normal message
           log.info(`forwarding normal message ${event.text}......`);
+          if (event.files === undefined) {
+          }
+          else { // there are files
+            for (file of event.files) {
+              if (file.user === config.remote_bot_user || file.user === config.local_bot_user) {
+                continue;
+              }
+              (async () => {
+                const result = await remote_bot.files.upload({
+                  file: request.get(
+                    file.url_private,
+                    {
+                      'headers': {
+                        'Authorization': 'Bearer ' + bot_token
+                      },
+                    }),
+                  channels: remote_channel_id,
+                  initial_comment: `*${getNameFromUser(await getUser(local_web,file.user))}*\n${event.text}`,
+                })
+                log.info(`File uploaded:  ${result.file.id}`);
+              })();
+            }
+            break;
+          }
           Promise.all([
             getUser(local_web, event.user),
             preprocessUserMentions(local_web, event.text)
@@ -293,8 +324,24 @@ function createPortal(local_web, local_rtm, remote_web, local_channel_id, remote
         }
         break;
       case 'bot_message':
-        // Do nothing to prevent infinite messages sent back and forth
-        log.info('ignored bot message to prevent messages sent back and forth');
+        if (config.remote_bot_id === '' || config.local_bot_id === '') {
+          log.info('bot id unknown, ignored on default');
+          break;
+        }
+        // check bot user id to avoid infinte transfer
+        if (event.bot_id === config.remote_bot_id || event.bot_id === config.local_bot_id) {
+          log.info('ignored bot message to prevent messages sent back and forth');
+          break;
+        }
+        log.info(`forwarding to remote......`);
+        remote_web.chat.postMessage({
+          channel: remote_channel_id,
+          text: event.text,
+          as_user: false,
+          link_names: true,
+          username: event.username,
+          blocks: event.blocks,
+        });
         break;
       default:
         log.warn(`unknown event.subtype ${event.subtype}, ignored`);
@@ -305,6 +352,7 @@ function createPortal(local_web, local_rtm, remote_web, local_channel_id, remote
 async function main() {
   log.info(`local web client connecting...`);
   const local_web = new WebClient(config.local_oauth_token);
+  const local_bot = new WebClient(config.local_bot_token);
   log.info(`local rtm client connecting...`);
   const local_rtm = new RTMClient(config.local_bot_token);
   log.info(`local rtm start...`);
@@ -312,6 +360,7 @@ async function main() {
 
   log.info(`remote web client connecting...`);
   const remote_web = new WebClient(config.remote_oauth_token);
+  const remote_bot = new WebClient(config.remote_bot_token);
   log.info(`remote rtm client connecting...`);
   const remote_rtm = new RTMClient(config.remote_bot_token);
   log.info(`remote rtm start...`);
@@ -331,8 +380,19 @@ async function main() {
   remote_web.cached_users = {};
   //TODO: cached local messages, so thread reply can be more efficient
   //var local_messages = {};
-  createPortal(local_web, local_rtm, remote_web, local_channel_id, remote_channel_id);
-  createPortal(remote_web, remote_rtm, local_web, remote_channel_id, local_channel_id);
+  local_bot.auth.test({token: config.local_bot_token})
+    .then(res => {
+        config.local_bot_user = res.user_id;
+        log.info(`local bot user ${config.local_bot_user}`);
+    });
+  remote_bot.auth.test({token: config.remote_bot_token})
+    .then(res => {
+        config.remote_bot_user = res.user_id;
+        log.info(`local bot user ${config.remote_bot_user}`);
+    });
+
+  createPortal(local_web, local_rtm, remote_web, local_channel_id, remote_channel_id, remote_bot, config.local_bot_token);
+  createPortal(remote_web, remote_rtm, local_web, remote_channel_id, local_channel_id, local_bot, config.remote_bot_token);
 }
 
 main();
