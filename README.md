@@ -22,7 +22,7 @@ node index.js
 
 ## Get API Tokens
 
-1. Create a new slack app in [https://api.slack.com/apps](https://api.slack.com/apps).
+1. Create a new slack app in [https://api.slack.com/apps?new_classic_app=1](https://api.slack.com/apps?new_classic_app=1). This program uses lagacy APIs.
 2. App name can be arbitrary. Choose one of the workspaces you want to use SlackPortal.
 3. Navigate to "Add features and functionality": Select "Bots" and then "Add a Bot User"
 4. Both display name and default username can be arbitrary.
