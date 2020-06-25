@@ -333,6 +333,10 @@ function createPortal(local_web, local_rtm, remote_web, local_channel_id, remote
           log.info('ignored bot message to prevent messages sent back and forth');
           break;
         }
+        if (event.bot_id === 'B01') {
+          log.info('ignored message from slackbot');
+          break;
+        }
         log.info(`forwarding to remote......`);
         remote_web.chat.postMessage({
           channel: remote_channel_id,
